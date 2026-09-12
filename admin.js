@@ -88,8 +88,15 @@ async function initAdmin() {
     statusEl.classList.add('ok');
     fillForm(currentData);
   } catch (err) {
-    console.error(err);
-    statusEl.textContent = 'Connection error — see console';
+    console.error('IPA admin connection error:', err);
+    const code = err?.code || err?.name || 'unknown_error';
+    if (code === 'anonymous_provider_disabled' || /anonymous.*disabled/i.test(err?.message || '')) {
+      statusEl.textContent = 'Anonymous sign-in is disabled in Supabase';
+    } else if (err?.message) {
+      statusEl.textContent = `Connection error: ${err.message}`;
+    } else {
+      statusEl.textContent = 'Connection error — see console';
+    }
     statusEl.classList.add('warn');
   }
 }
