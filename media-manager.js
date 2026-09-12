@@ -1,6 +1,7 @@
 /* ============================================================
    IPA Church Elappara — Media Manager
-   Separate media controls for Home, Ministries, Gallery and Video.
+   Separate media controls for Home, Ministries, Leadership,
+   Gallery and Sunday Service video.
    ============================================================ */
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4';
 import { supabaseUrl, supabaseAnonKey, supabaseReady } from './supabase-config.js';
@@ -9,28 +10,24 @@ const BUCKET = 'site-media';
 const TABLE = 'site_media';
 
 const SECTIONS = {
-  home_moment: { label: 'Home — Main Church Moment', multiple: false, kind: 'image' },
-  ministry_youth: { label: 'Ministries — Youth', multiple: false, kind: 'image' },
-  ministry_worship: { label: 'Ministries — Worship Team', multiple: false, kind: 'image' },
-  ministry_family: { label: 'Ministries — Church Family', multiple: false, kind: 'image' },
+  home_moment: { label: 'Home — Main Church Moment', multiple: false, kind: 'image', selector: '.hero-card .hero-photo img' },
+  ministry_youth: { label: 'Ministries — Youth', multiple: false, kind: 'image', index: 0 },
+  ministry_worship: { label: 'Ministries — Worship Team', multiple: false, kind: 'image', index: 1 },
+  ministry_family: { label: 'Ministries — Church Family', multiple: false, kind: 'image', index: 2 },
+  leadership: { label: 'Leadership — Pastor / Leader', multiple: false, kind: 'image', selector: '.pastor-media img' },
   gallery: { label: 'Gallery', multiple: true, kind: 'image' },
-  sunday_service_video: { label: 'Sunday Service — Current Video', multiple: false, kind: 'video' },
+  sunday_service_video: { label: 'Sunday Service — Current Video', multiple: false, kind: 'video', selector: '.watch-frame video' },
 };
 
 let client = null;
 
 const escapeHtml = (value) => String(value ?? '')
-  .replace(/&/g, '&amp;')
-  .replace(/</g, '&lt;')
-  .replace(/>/g, '&gt;')
-  .replace(/"/g, '&quot;')
-  .replace(/'/g, '&#39;');
+  .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 
 const titleFromName = (name) => String(name || 'Untitled media')
-  .replace(/\.[^.]+$/, '')
-  .replace(/[_-]+/g, ' ')
-  .replace(/\s+/g, ' ')
-  .trim() || 'Untitled media';
+  .replace(/\.[^.]+$/, '').replace(/[_-]+/g, ' ')
+  .replace(/\s+/g, ' ').trim() || 'Untitled media';
 
 async function getClient() {
   if (!supabaseReady || !supabaseUrl || !supabaseAnonKey) return null;
@@ -56,7 +53,7 @@ async function listMedia() {
   const sb = await getClient();
   if (!sb) return { data: [], error: null };
   return sb.from(TABLE)
-    .select('id,path,kind,section,category,title,caption,sort_order,created_at')
+    .select('id,path,kind,section,title,caption,sort_order,created_at')
     .order('sort_order', { ascending: true })
     .order('created_at', { ascending: true });
 }
@@ -97,38 +94,6 @@ function adminStatus(message, error = false) {
     el.textContent = message;
     el.style.color = error ? '#e07a5f' : '';
   });
-}
-
-function buildSectionCard(section, items) {
-  const cfg = SECTIONS[section];
-  const card = document.createElement('section');
-  card.className = 'ipa-mm-card';
-  card.dataset.section = section;
-
-  const current = sectionItems(items, section);
-  const accept = cfg.kind === 'video' ? 'video/mp4,video/webm,video/quicktime' : 'image/*';
-  const buttonText = cfg.kind === 'video'
-    ? (current.length ? 'Replace video' : 'Upload video')
-    : (cfg.multiple ? 'Add images' : (current.length ? 'Replace image' : 'Upload image'));
-
-  card.innerHTML = `
-    <div style="display:flex;justify-content:space-between;gap:1rem;align-items:flex-start;flex-wrap:wrap;">
-      <div>
-        <h2>${escapeHtml(cfg.label)}</h2>
-        <p class="ipa-mm-help">${cfg.multiple ? 'Add as many gallery photos as needed. Each photo has its own heading and caption.' : 'Only one item is used here. Uploading a new one replaces the current item.'}</p>
-      </div>
-      <span class="ipa-mm-count">${current.length} ${current.length === 1 ? 'item' : 'items'}</span>
-    </div>
-    <div class="ipa-mm-toolbar">
-      <input class="ipa-mm-file" type="file" accept="${accept}" ${cfg.multiple ? 'multiple' : ''}>
-      <button type="button" class="admin-save ipa-mm-upload">${buttonText}</button>
-      <span class="ipa-mm-status" data-mm-status></span>
-    </div>
-    <div class="ipa-mm-list">${renderSectionItems(current)}</div>`;
-
-  card.querySelector('.ipa-mm-upload').addEventListener('click', () => uploadSection(section, card));
-  bindItemEvents(card);
-  return card;
 }
 
 function renderSectionItems(items) {
@@ -197,19 +162,47 @@ function bindItemEvents(card) {
   });
 }
 
+function buildSectionCard(section, items) {
+  const cfg = SECTIONS[section];
+  const card = document.createElement('section');
+  card.className = 'ipa-mm-card';
+  card.dataset.section = section;
+  const current = sectionItems(items, section);
+  const accept = cfg.kind === 'video' ? 'video/mp4,video/webm,video/quicktime' : 'image/*';
+  const buttonText = cfg.kind === 'video' ? (current.length ? 'Replace video' : 'Upload video')
+    : (cfg.multiple ? 'Add images' : (current.length ? 'Replace image' : 'Upload image'));
+
+  card.innerHTML = `
+    <div style="display:flex;justify-content:space-between;gap:1rem;align-items:flex-start;flex-wrap:wrap;">
+      <div>
+        <h2>${escapeHtml(cfg.label)}</h2>
+        <p class="ipa-mm-help">${cfg.multiple ? 'Add as many gallery photos as needed. Each photo has its own heading and caption.' : 'Only one item is used here. Uploading a new one replaces the current item.'}</p>
+      </div>
+      <span class="ipa-mm-count">${current.length} ${current.length === 1 ? 'item' : 'items'}</span>
+    </div>
+    <div class="ipa-mm-toolbar">
+      <input class="ipa-mm-file" type="file" accept="${accept}" ${cfg.multiple ? 'multiple' : ''}>
+      <button type="button" class="admin-save ipa-mm-upload">${buttonText}</button>
+      <span class="ipa-mm-status" data-mm-status></span>
+    </div>
+    <div class="ipa-mm-list">${renderSectionItems(current)}</div>`;
+  card.querySelector('.ipa-mm-upload').addEventListener('click', () => uploadSection(section, card));
+  bindItemEvents(card);
+  return card;
+}
+
 async function removeExistingSectionItems(sb, section) {
   const { data, error } = await sb.from(TABLE).select('id,path').eq('section', section);
   if (error) throw error;
   const rows = data || [];
-  if (rows.length) {
-    const paths = rows.map((row) => row.path).filter(Boolean);
-    if (paths.length) {
-      const { error: storageError } = await sb.storage.from(BUCKET).remove(paths);
-      if (storageError) console.warn('Previous storage delete warning:', storageError.message);
-    }
-    const { error: deleteError } = await sb.from(TABLE).delete().eq('section', section);
-    if (deleteError) throw deleteError;
+  if (!rows.length) return;
+  const paths = rows.map((row) => row.path).filter(Boolean);
+  if (paths.length) {
+    const { error: storageError } = await sb.storage.from(BUCKET).remove(paths);
+    if (storageError) console.warn('Previous storage delete warning:', storageError.message);
   }
+  const { error: deleteError } = await sb.from(TABLE).delete().eq('section', section);
+  if (deleteError) throw deleteError;
 }
 
 async function uploadSection(section, card) {
@@ -217,16 +210,10 @@ async function uploadSection(section, card) {
   const input = card.querySelector('.ipa-mm-file');
   const files = Array.from(input.files || []);
   const status = card.querySelector('[data-mm-status]');
-  if (!files.length) {
-    status.textContent = 'Choose a file first.';
-    return;
-  }
+  if (!files.length) { status.textContent = 'Choose a file first.'; return; }
 
   const valid = files.filter((file) => {
-    if (file.size > 50 * 1024 * 1024) {
-      status.textContent = `${file.name} is larger than 50 MB.`;
-      return false;
-    }
+    if (file.size > 50 * 1024 * 1024) { status.textContent = `${file.name} is larger than 50 MB.`; return false; }
     return cfg.kind === 'video' ? file.type.startsWith('video/') : file.type.startsWith('image/');
   });
   if (!valid.length) return;
@@ -234,36 +221,19 @@ async function uploadSection(section, card) {
   try {
     const sb = await ensureAdminSession();
     if (!cfg.multiple) await removeExistingSectionItems(sb, section);
-
     let added = 0;
     for (const file of (cfg.multiple ? valid : valid.slice(0, 1))) {
-      const ext = (file.name.match(/\.([^.]+)$/)?.[1] || (cfg.kind === 'video' ? 'mp4' : 'jpg'))
-        .toLowerCase().replace(/[^a-z0-9]/g, '');
+      const ext = (file.name.match(/\.([^.]+)$/)?.[1] || (cfg.kind === 'video' ? 'mp4' : 'jpg')).toLowerCase().replace(/[^a-z0-9]/g, '');
       const path = `${cfg.kind === 'video' ? 'videos' : 'images'}/${section}/${Date.now()}-${crypto.randomUUID()}.${ext}`;
       status.textContent = `Uploading ${file.name}…`;
-
-      const { error: uploadError } = await sb.storage.from(BUCKET).upload(path, file, {
-        contentType: file.type,
-        cacheControl: '3600',
-        upsert: false,
-      });
+      const { error: uploadError } = await sb.storage.from(BUCKET).upload(path, file, { contentType: file.type, cacheControl: '3600', upsert: false });
       if (uploadError) throw uploadError;
-
       const { error: rowError } = await sb.from(TABLE).insert({
-        path,
-        kind: cfg.kind,
-        section,
-        title: titleFromName(file.name),
-        caption: '',
-        sort_order: Date.now() % 2147483647,
+        path, kind: cfg.kind, section, title: titleFromName(file.name), caption: '', sort_order: Math.floor(Date.now() / 1000) % 2147483647,
       });
-      if (rowError) {
-        await sb.storage.from(BUCKET).remove([path]);
-        throw rowError;
-      }
+      if (rowError) { await sb.storage.from(BUCKET).remove([path]); throw rowError; }
       added += 1;
     }
-
     input.value = '';
     status.textContent = `${added} ${added === 1 ? 'item' : 'items'} saved ✓`;
     await refreshAdminManager();
@@ -277,16 +247,11 @@ async function refreshAdminManager() {
   const root = document.getElementById('ipaMediaManager');
   if (!root) return;
   const result = await listMedia();
-  if (result.error) {
-    adminStatus(`Could not load media: ${result.error.message}`, true);
-    return;
-  }
-
-  const items = result.data || [];
+  if (result.error) { adminStatus(`Could not load media: ${result.error.message}`, true); return; }
   const existing = root.querySelector('.ipa-mm-wrap');
   if (!existing) return;
   existing.innerHTML = '';
-  Object.keys(SECTIONS).forEach((section) => existing.appendChild(buildSectionCard(section, items)));
+  Object.keys(SECTIONS).forEach((section) => existing.appendChild(buildSectionCard(section, result.data || [])));
   adminStatus('Connected');
 }
 
@@ -294,28 +259,18 @@ async function setupAdmin() {
   const shell = document.querySelector('#panel .admin-shell');
   if (!shell || document.getElementById('ipaMediaManager')) return;
   ensureStyle();
-
   const root = document.createElement('section');
   root.id = 'ipaMediaManager';
   root.className = 'ipa-mm-card';
   root.innerHTML = `
     <div style="display:flex;justify-content:space-between;gap:1rem;align-items:flex-start;flex-wrap:wrap;">
-      <div>
-        <h2>Website Media</h2>
-        <p class="ipa-mm-help">Manage each part of the website separately. Gallery photos support editable headings and captions. Single-slot sections replace their current media when a new file is uploaded.</p>
-      </div>
+      <div><h2>Website Media</h2><p class="ipa-mm-help">Manage Home, Ministries, Leadership, Gallery and the current Sunday Service video separately.</p></div>
       <span class="ipa-mm-status" data-mm-status>Connecting…</span>
     </div>
     <div class="ipa-mm-wrap"></div>`;
   shell.appendChild(root);
-
-  try {
-    await ensureAdminSession();
-    await refreshAdminManager();
-  } catch (err) {
-    console.error(err);
-    adminStatus(err.message || 'Media library unavailable.', true);
-  }
+  try { await ensureAdminSession(); await refreshAdminManager(); }
+  catch (err) { console.error(err); adminStatus(err.message || 'Media library unavailable.', true); }
 }
 
 function initPublicCoverflow() {
@@ -328,8 +283,7 @@ function initPublicCoverflow() {
   const slides = Array.from(track.querySelectorAll('.cf-slide'));
   const total = slides.length;
   if (!total) return;
-  let current = 0;
-  let timer = null;
+  let current = 0, timer = null;
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const go = (i) => { current = ((i % total) + total) % total; render(); };
   const render = () => {
@@ -354,17 +308,13 @@ function initPublicCoverflow() {
     dot.addEventListener('click', () => go(i));
     dotsWrap.appendChild(dot);
   });
-  prev.onclick = () => go(current - 1);
-  next.onclick = () => go(current + 1);
+  prev.onclick = () => go(current - 1); next.onclick = () => go(current + 1);
   slides.forEach((slide, i) => slide.addEventListener('click', () => i !== current && go(i)));
   if (!reduceMotion) {
     const stop = () => { if (timer) clearInterval(timer); timer = null; };
     const start = () => { stop(); timer = setInterval(() => go(current + 1), 4800); };
-    stage.addEventListener('mouseenter', stop);
-    stage.addEventListener('mouseleave', start);
-    stage.addEventListener('touchstart', stop, { passive: true });
-    stage.addEventListener('touchend', start, { passive: true });
-    start();
+    stage.addEventListener('mouseenter', stop); stage.addEventListener('mouseleave', start);
+    stage.addEventListener('touchstart', stop, { passive: true }); stage.addEventListener('touchend', start, { passive: true }); start();
   }
   render();
 }
@@ -373,11 +323,7 @@ function renderPublicGallery(items) {
   const gallery = sectionItems(items, 'gallery');
   const track = document.getElementById('cfTrack');
   if (!track || !gallery.length) return;
-  track.innerHTML = gallery.map((item, i) => `
-    <div class="cf-slide" data-index="${i}">
-      <div class="cf-media"><img src="${escapeHtml(publicUrl(item.path))}" alt="${escapeHtml(item.title || 'IPA Church Elappara photo')}"></div>
-      <p class="cf-caption">${escapeHtml(item.caption || item.title || 'IPA Church Elappara')}</p>
-    </div>`).join('');
+  track.innerHTML = gallery.map((item, i) => `<div class="cf-slide" data-index="${i}"><div class="cf-media"><img src="${escapeHtml(publicUrl(item.path))}" alt="${escapeHtml(item.title || 'IPA Church Elappara photo')}"></div><p class="cf-caption">${escapeHtml(item.caption || item.title || 'IPA Church Elappara')}</p></div>`).join('');
   initPublicCoverflow();
 }
 
@@ -387,13 +333,8 @@ function renderPublicSingleMedia(items, section, selector) {
   const el = document.querySelector(selector);
   if (!el) return;
   const url = publicUrl(item.path);
-  if (el.tagName === 'IMG') {
-    el.src = url;
-    if (item.title) el.alt = item.title;
-  } else if (el.tagName === 'VIDEO') {
-    el.src = url;
-    el.load();
-  }
+  if (el.tagName === 'IMG') { el.src = url; if (item.title) el.alt = item.title; }
+  else if (el.tagName === 'VIDEO') { el.src = url; el.load(); }
 }
 
 function renderPublicMinistry(items, section, index) {
@@ -409,18 +350,14 @@ async function loadPublicMedia() {
   if (!sb) return;
   const { data, error } = await sb.from(TABLE)
     .select('id,path,kind,section,title,caption,sort_order,created_at')
-    .order('sort_order', { ascending: true })
-    .order('created_at', { ascending: true });
-  if (error) {
-    console.warn('IPA public media load skipped:', error);
-    return;
-  }
+    .order('sort_order', { ascending: true }).order('created_at', { ascending: true });
+  if (error) { console.warn('IPA public media load skipped:', error); return; }
   const items = data || [];
-
   renderPublicSingleMedia(items, 'home_moment', '.hero-card .hero-photo img');
   renderPublicMinistry(items, 'ministry_youth', 0);
   renderPublicMinistry(items, 'ministry_worship', 1);
   renderPublicMinistry(items, 'ministry_family', 2);
+  renderPublicSingleMedia(items, 'leadership', '.pastor-media img');
   renderPublicGallery(items);
   renderPublicSingleMedia(items, 'sunday_service_video', '.watch-frame video');
 }
@@ -428,11 +365,7 @@ async function loadPublicMedia() {
 window.IPAMediaManager = { setupAdmin, loadPublicMedia };
 
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => {
-    if (document.getElementById('panel')) setupAdmin();
-    else loadPublicMedia();
-  });
+  document.addEventListener('DOMContentLoaded', () => document.getElementById('panel') ? setupAdmin() : loadPublicMedia());
 } else {
-  if (document.getElementById('panel')) setupAdmin();
-  else loadPublicMedia();
+  if (document.getElementById('panel')) setupAdmin(); else loadPublicMedia();
 }
