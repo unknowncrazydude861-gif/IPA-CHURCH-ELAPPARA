@@ -1,47 +1,36 @@
 /* ============================================================
-   IPA Church Elappara — media manager
-   Handles Supabase Storage uploads/deletes and public rendering.
+   IPA Church Elappara — Media Manager
+   Separate media controls for Home, Ministries, Gallery and Video.
    ============================================================ */
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4';
 import { supabaseUrl, supabaseAnonKey, supabaseReady } from './supabase-config.js';
 
 const BUCKET = 'site-media';
 const TABLE = 'site_media';
+
+const SECTIONS = {
+  home_moment: { label: 'Home — Main Church Moment', multiple: false, kind: 'image' },
+  ministry_youth: { label: 'Ministries — Youth', multiple: false, kind: 'image' },
+  ministry_worship: { label: 'Ministries — Worship Team', multiple: false, kind: 'image' },
+  ministry_family: { label: 'Ministries — Church Family', multiple: false, kind: 'image' },
+  gallery: { label: 'Gallery', multiple: true, kind: 'image' },
+  sunday_service_video: { label: 'Sunday Service — Current Video', multiple: false, kind: 'video' },
+};
+
 let client = null;
 
 const escapeHtml = (value) => String(value ?? '')
-  .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-  .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  .replace(/&/g, '&amp;')
+  .replace(/</g, '&lt;')
+  .replace(/>/g, '&gt;')
+  .replace(/"/g, '&quot;')
+  .replace(/'/g, '&#39;');
 
 const titleFromName = (name) => String(name || 'Untitled media')
-  .replace(/\.[^.]+$/, '').replace(/[_-]+/g, ' ')
-  .replace(/\s+/g, ' ').trim() || 'Untitled media';
-
-function ensureStyle() {
-  if (document.getElementById('ipaMediaStyle')) return;
-  const style = document.createElement('style');
-  style.id = 'ipaMediaStyle';
-  style.textContent = `
-    .ipa-media-card{border:1px solid var(--line);border-radius:6px;padding:1.6rem;margin-bottom:1.6rem;background:var(--bg-elev);}
-    .ipa-media-head{display:flex;justify-content:space-between;gap:1rem;align-items:flex-start;margin-bottom:1.15rem;}
-    .ipa-media-help{font-size:.8rem;color:var(--muted-2);line-height:1.5;margin:.25rem 0 0;}
-    .ipa-media-count{font-size:.72rem;color:var(--gold-2);border:1px solid var(--line-strong);padding:.35rem .65rem;border-radius:999px;white-space:nowrap;}
-    .ipa-upload{border:1px dashed var(--line-strong);border-radius:5px;padding:1rem;display:flex;align-items:center;gap:.7rem;flex-wrap:wrap;margin-bottom:1rem;}
-    .ipa-upload input{max-width:290px;color:var(--muted-2);font-size:.78rem;}
-    .ipa-media-list{display:grid;gap:1rem;}
-    .ipa-media-item{display:grid;grid-template-columns:190px 1fr;gap:1rem;padding:.8rem;border:1px solid var(--line);border-radius:5px;background:rgba(255,255,255,.015);}
-    .ipa-media-preview{aspect-ratio:16/10;background:#000;border-radius:4px;overflow:hidden;}
-    .ipa-media-preview img,.ipa-media-preview video{width:100%;height:100%;object-fit:cover;display:block;}
-    .ipa-media-kind{font-size:.64rem;letter-spacing:.1em;color:var(--gold-2);display:block;margin-bottom:.45rem;}
-    .ipa-media-title,.ipa-media-caption{width:100%;border:1px solid var(--line-strong);background:var(--bg);color:var(--ink);border-radius:4px;padding:.65rem .75rem;font:inherit;}
-    .ipa-media-caption{margin-top:.6rem;resize:vertical;}
-    .ipa-media-actions{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;margin-top:.65rem;}
-    .ipa-media-empty{font-size:.82rem;color:var(--muted-2);margin:0;padding:.5rem 0;}
-    .ipa-media-error{color:#e07a5f;}
-    @media(max-width:700px){.ipa-media-item{grid-template-columns:1fr}.ipa-upload input{max-width:none;width:100%}.ipa-media-head{flex-direction:column}}
-  `;
-  document.head.appendChild(style);
-}
+  .replace(/\.[^.]+$/, '')
+  .replace(/[_-]+/g, ' ')
+  .replace(/\s+/g, ' ')
+  .trim() || 'Untitled media';
 
 async function getClient() {
   if (!supabaseReady || !supabaseUrl || !supabaseAnonKey) return null;
@@ -52,8 +41,8 @@ async function getClient() {
 async function ensureAdminSession() {
   const sb = await getClient();
   if (!sb) return null;
-  const { data: sessionData } = await sb.auth.getSession();
-  if (sessionData.session) return sb;
+  const { data } = await sb.auth.getSession();
+  if (data?.session) return sb;
   const { error } = await sb.auth.signInAnonymously();
   if (error) throw error;
   return sb;
@@ -66,207 +55,266 @@ function publicUrl(path) {
 async function listMedia() {
   const sb = await getClient();
   if (!sb) return { data: [], error: null };
-  return await sb.from(TABLE)
-    .select('id,path,kind,title,caption,sort_order,created_at')
+  return sb.from(TABLE)
+    .select('id,path,kind,section,category,title,caption,sort_order,created_at')
     .order('sort_order', { ascending: true })
     .order('created_at', { ascending: true });
 }
 
-function mediaStatus(text, error = false) {
-  const el = document.getElementById('ipaMediaStatus');
-  if (!el) return;
-  el.textContent = text;
-  el.style.color = error ? '#e07a5f' : '';
+function sectionItems(items, section) {
+  return (items || []).filter((item) => item.section === section);
 }
 
-function renderAdminList(items) {
-  const list = document.getElementById('ipaMediaList');
-  const count = document.getElementById('ipaMediaCount');
-  if (!list) return;
-  if (count) count.textContent = `${items.length} ${items.length === 1 ? 'file' : 'files'}`;
-  if (!items.length) {
-    list.innerHTML = '<p class="ipa-media-empty">No media uploaded yet.</p>';
-    return;
-  }
+function ensureStyle() {
+  if (document.getElementById('ipaMediaStyle')) return;
+  const style = document.createElement('style');
+  style.id = 'ipaMediaStyle';
+  style.textContent = `
+    .ipa-mm-wrap{display:grid;gap:1rem;}
+    .ipa-mm-card{border:1px solid var(--line);border-radius:6px;padding:1.25rem;background:var(--bg-elev);}
+    .ipa-mm-card h2{margin-bottom:.2rem;}
+    .ipa-mm-help{font-size:.8rem;color:var(--muted-2);line-height:1.5;margin:0 0 1rem;}
+    .ipa-mm-toolbar{display:flex;gap:.65rem;align-items:center;flex-wrap:wrap;padding:1rem;border:1px dashed var(--line-strong);border-radius:5px;}
+    .ipa-mm-toolbar input{max-width:320px;color:var(--muted-2);font-size:.78rem;}
+    .ipa-mm-count{font-size:.72rem;color:var(--gold-2);border:1px solid var(--line-strong);padding:.3rem .6rem;border-radius:999px;white-space:nowrap;}
+    .ipa-mm-list{display:grid;gap:.8rem;margin-top:1rem;}
+    .ipa-mm-item{display:grid;grid-template-columns:180px 1fr;gap:1rem;padding:.8rem;border:1px solid var(--line);border-radius:5px;background:rgba(255,255,255,.015);}
+    .ipa-mm-preview{aspect-ratio:16/10;background:#000;border-radius:4px;overflow:hidden;}
+    .ipa-mm-preview img,.ipa-mm-preview video{width:100%;height:100%;object-fit:cover;display:block;}
+    .ipa-mm-kind{font-size:.63rem;letter-spacing:.11em;color:var(--gold-2);display:block;margin-bottom:.4rem;}
+    .ipa-mm-input,.ipa-mm-textarea{width:100%;border:1px solid var(--line-strong);background:var(--bg);color:var(--ink);border-radius:4px;padding:.6rem .7rem;font:inherit;}
+    .ipa-mm-textarea{margin-top:.55rem;resize:vertical;}
+    .ipa-mm-actions{display:flex;gap:.55rem;align-items:center;flex-wrap:wrap;margin-top:.6rem;}
+    .ipa-mm-status{font-size:.75rem;color:var(--muted-2);}
+    .ipa-mm-empty{font-size:.8rem;color:var(--muted-2);margin:0;padding:.4rem 0;}
+    @media(max-width:700px){.ipa-mm-item{grid-template-columns:1fr}.ipa-mm-toolbar input{width:100%;max-width:none}}
+  `;
+  document.head.appendChild(style);
+}
 
-  list.innerHTML = items.map((item) => {
+function adminStatus(message, error = false) {
+  document.querySelectorAll('[data-mm-status]').forEach((el) => {
+    el.textContent = message;
+    el.style.color = error ? '#e07a5f' : '';
+  });
+}
+
+function buildSectionCard(section, items) {
+  const cfg = SECTIONS[section];
+  const card = document.createElement('section');
+  card.className = 'ipa-mm-card';
+  card.dataset.section = section;
+
+  const current = sectionItems(items, section);
+  const accept = cfg.kind === 'video' ? 'video/mp4,video/webm,video/quicktime' : 'image/*';
+  const buttonText = cfg.kind === 'video'
+    ? (current.length ? 'Replace video' : 'Upload video')
+    : (cfg.multiple ? 'Add images' : (current.length ? 'Replace image' : 'Upload image'));
+
+  card.innerHTML = `
+    <div style="display:flex;justify-content:space-between;gap:1rem;align-items:flex-start;flex-wrap:wrap;">
+      <div>
+        <h2>${escapeHtml(cfg.label)}</h2>
+        <p class="ipa-mm-help">${cfg.multiple ? 'Add as many gallery photos as needed. Each photo has its own heading and caption.' : 'Only one item is used here. Uploading a new one replaces the current item.'}</p>
+      </div>
+      <span class="ipa-mm-count">${current.length} ${current.length === 1 ? 'item' : 'items'}</span>
+    </div>
+    <div class="ipa-mm-toolbar">
+      <input class="ipa-mm-file" type="file" accept="${accept}" ${cfg.multiple ? 'multiple' : ''}>
+      <button type="button" class="admin-save ipa-mm-upload">${buttonText}</button>
+      <span class="ipa-mm-status" data-mm-status></span>
+    </div>
+    <div class="ipa-mm-list">${renderSectionItems(current)}</div>`;
+
+  card.querySelector('.ipa-mm-upload').addEventListener('click', () => uploadSection(section, card));
+  bindItemEvents(card);
+  return card;
+}
+
+function renderSectionItems(items) {
+  if (!items.length) return '<p class="ipa-mm-empty">Nothing uploaded yet.</p>';
+  return items.map((item) => {
     const url = publicUrl(item.path);
     const preview = item.kind === 'video'
       ? `<video src="${escapeHtml(url)}" muted controls preload="metadata"></video>`
       : `<img src="${escapeHtml(url)}" alt="${escapeHtml(item.title || 'Church photo')}">`;
     return `
-      <article class="ipa-media-item" data-id="${Number(item.id)}" data-path="${escapeHtml(item.path)}">
-        <div class="ipa-media-preview">${preview}</div>
+      <article class="ipa-mm-item" data-id="${Number(item.id)}" data-path="${escapeHtml(item.path)}">
+        <div class="ipa-mm-preview">${preview}</div>
         <div>
-          <span class="ipa-media-kind">${item.kind === 'video' ? 'VIDEO' : 'IMAGE'}</span>
-          <input class="ipa-media-title" value="${escapeHtml(item.title || '')}" placeholder="Title">
-          <textarea class="ipa-media-caption" rows="2" placeholder="Caption shown below the photo">${escapeHtml(item.caption || '')}</textarea>
-          <div class="ipa-media-actions">
-            <button type="button" class="admin-save ipa-media-save">Save details</button>
-            <button type="button" class="admin-small-btn ipa-media-delete">Remove</button>
-            <span class="admin-msg ipa-media-row-msg"></span>
+          <span class="ipa-mm-kind">${item.kind === 'video' ? 'VIDEO' : 'IMAGE'}</span>
+          <input class="ipa-mm-input ipa-mm-title" value="${escapeHtml(item.title || '')}" placeholder="Image heading / title">
+          <textarea class="ipa-mm-textarea ipa-mm-caption" rows="2" placeholder="Caption">${escapeHtml(item.caption || '')}</textarea>
+          <div class="ipa-mm-actions">
+            <button type="button" class="admin-save ipa-mm-save">Save</button>
+            <button type="button" class="admin-small-btn ipa-mm-delete">Remove</button>
+            <span class="ipa-mm-status ipa-mm-row-status"></span>
           </div>
         </div>
       </article>`;
   }).join('');
+}
 
-  list.querySelectorAll('.ipa-media-save').forEach((button) => {
+function bindItemEvents(card) {
+  card.querySelectorAll('.ipa-mm-save').forEach((button) => {
     button.addEventListener('click', async () => {
-      const item = button.closest('.ipa-media-item');
-      const msg = item.querySelector('.ipa-media-row-msg');
-      msg.textContent = 'Saving…';
+      const item = button.closest('.ipa-mm-item');
+      const status = item.querySelector('.ipa-mm-row-status');
+      status.textContent = 'Saving…';
       try {
         const sb = await ensureAdminSession();
         const { error } = await sb.from(TABLE).update({
-          title: item.querySelector('.ipa-media-title').value.trim(),
-          caption: item.querySelector('.ipa-media-caption').value.trim(),
+          title: item.querySelector('.ipa-mm-title').value.trim(),
+          caption: item.querySelector('.ipa-mm-caption').value.trim(),
         }).eq('id', Number(item.dataset.id));
         if (error) throw error;
-        msg.textContent = 'Saved ✓';
-        msg.className = 'admin-msg ipa-media-row-msg ok';
+        status.textContent = 'Saved ✓';
       } catch (err) {
         console.error(err);
-        msg.textContent = err.message || 'Could not save';
-        msg.className = 'admin-msg ipa-media-row-msg err';
+        status.textContent = err.message || 'Could not save';
       }
     });
   });
 
-  list.querySelectorAll('.ipa-media-delete').forEach((button) => {
+  card.querySelectorAll('.ipa-mm-delete').forEach((button) => {
     button.addEventListener('click', async () => {
-      const item = button.closest('.ipa-media-item');
+      const item = button.closest('.ipa-mm-item');
       if (!confirm('Remove this media file from the website?')) return;
-      const msg = item.querySelector('.ipa-media-row-msg');
-      msg.textContent = 'Removing…';
+      const status = item.querySelector('.ipa-mm-row-status');
+      status.textContent = 'Removing…';
       try {
         const sb = await ensureAdminSession();
-        const { error: storageError } = await sb.storage.from(BUCKET).remove([item.dataset.path]);
-        if (storageError) throw storageError;
         const { error: rowError } = await sb.from(TABLE).delete().eq('id', Number(item.dataset.id));
         if (rowError) throw rowError;
-        await refreshAdminMedia();
+        const { error: storageError } = await sb.storage.from(BUCKET).remove([item.dataset.path]);
+        if (storageError) console.warn('Storage delete warning:', storageError.message);
+        await refreshAdminManager();
       } catch (err) {
         console.error(err);
-        msg.textContent = err.message || 'Could not remove';
-        msg.className = 'admin-msg ipa-media-row-msg err';
+        status.textContent = err.message || 'Could not remove';
       }
     });
   });
 }
 
-async function refreshAdminMedia() {
-  const result = await listMedia();
-  if (result.error) {
-    renderAdminList([]);
-    mediaStatus(`Could not load media: ${result.error.message}`, true);
-    return;
+async function removeExistingSectionItems(sb, section) {
+  const { data, error } = await sb.from(TABLE).select('id,path').eq('section', section);
+  if (error) throw error;
+  const rows = data || [];
+  if (rows.length) {
+    const paths = rows.map((row) => row.path).filter(Boolean);
+    if (paths.length) {
+      const { error: storageError } = await sb.storage.from(BUCKET).remove(paths);
+      if (storageError) console.warn('Previous storage delete warning:', storageError.message);
+    }
+    const { error: deleteError } = await sb.from(TABLE).delete().eq('section', section);
+    if (deleteError) throw deleteError;
   }
-  renderAdminList(result.data || []);
 }
 
-async function uploadAdminMedia() {
-  const input = document.getElementById('ipaMediaFiles');
-  if (!input?.files?.length) {
-    mediaStatus('Choose one or more images or videos first.', true);
+async function uploadSection(section, card) {
+  const cfg = SECTIONS[section];
+  const input = card.querySelector('.ipa-mm-file');
+  const files = Array.from(input.files || []);
+  const status = card.querySelector('[data-mm-status]');
+  if (!files.length) {
+    status.textContent = 'Choose a file first.';
     return;
   }
+
+  const valid = files.filter((file) => {
+    if (file.size > 50 * 1024 * 1024) {
+      status.textContent = `${file.name} is larger than 50 MB.`;
+      return false;
+    }
+    return cfg.kind === 'video' ? file.type.startsWith('video/') : file.type.startsWith('image/');
+  });
+  if (!valid.length) return;
 
   try {
     const sb = await ensureAdminSession();
-    const files = Array.from(input.files);
-    let uploaded = 0;
-    for (const file of files) {
-      if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) continue;
-      if (file.size > 50 * 1024 * 1024) {
-        mediaStatus(`${file.name} is larger than 50 MB and was skipped.`, true);
-        continue;
-      }
-      const kind = file.type.startsWith('video/') ? 'video' : 'image';
-      const ext = (file.name.match(/\.([^.]+)$/)?.[1] || (kind === 'video' ? 'mp4' : 'jpg')).toLowerCase().replace(/[^a-z0-9]/g, '');
-      const path = `${kind === 'video' ? 'videos' : 'images'}/${Date.now()}-${crypto.randomUUID()}.${ext}`;
-      mediaStatus(`Uploading ${file.name}…`);
+    if (!cfg.multiple) await removeExistingSectionItems(sb, section);
+
+    let added = 0;
+    for (const file of (cfg.multiple ? valid : valid.slice(0, 1))) {
+      const ext = (file.name.match(/\.([^.]+)$/)?.[1] || (cfg.kind === 'video' ? 'mp4' : 'jpg'))
+        .toLowerCase().replace(/[^a-z0-9]/g, '');
+      const path = `${cfg.kind === 'video' ? 'videos' : 'images'}/${section}/${Date.now()}-${crypto.randomUUID()}.${ext}`;
+      status.textContent = `Uploading ${file.name}…`;
+
       const { error: uploadError } = await sb.storage.from(BUCKET).upload(path, file, {
         contentType: file.type,
         cacheControl: '3600',
         upsert: false,
       });
       if (uploadError) throw uploadError;
+
       const { error: rowError } = await sb.from(TABLE).insert({
         path,
-        kind,
+        kind: cfg.kind,
+        section,
         title: titleFromName(file.name),
         caption: '',
-        sort_order: uploaded + 1,
+        sort_order: Date.now() % 2147483647,
       });
       if (rowError) {
         await sb.storage.from(BUCKET).remove([path]);
         throw rowError;
       }
-      uploaded += 1;
+      added += 1;
     }
+
     input.value = '';
-    mediaStatus(`${uploaded} file${uploaded === 1 ? '' : 's'} uploaded ✓`);
-    await refreshAdminMedia();
+    status.textContent = `${added} ${added === 1 ? 'item' : 'items'} saved ✓`;
+    await refreshAdminManager();
   } catch (err) {
     console.error(err);
-    mediaStatus(err.message || 'Upload failed', true);
+    status.textContent = err.message || 'Upload failed';
   }
+}
+
+async function refreshAdminManager() {
+  const root = document.getElementById('ipaMediaManager');
+  if (!root) return;
+  const result = await listMedia();
+  if (result.error) {
+    adminStatus(`Could not load media: ${result.error.message}`, true);
+    return;
+  }
+
+  const items = result.data || [];
+  const existing = root.querySelector('.ipa-mm-wrap');
+  if (!existing) return;
+  existing.innerHTML = '';
+  Object.keys(SECTIONS).forEach((section) => existing.appendChild(buildSectionCard(section, items)));
+  adminStatus('Connected');
 }
 
 async function setupAdmin() {
   const shell = document.querySelector('#panel .admin-shell');
   if (!shell || document.getElementById('ipaMediaManager')) return;
   ensureStyle();
-  const card = document.createElement('section');
-  card.id = 'ipaMediaManager';
-  card.className = 'ipa-media-card';
-  card.innerHTML = `
-    <div class="ipa-media-head">
-      <div><h2 style="margin-bottom:.15rem;">Images &amp; videos</h2><p class="ipa-media-help">Add or remove gallery photos and worship videos. Uploaded files are stored in Supabase Storage.</p></div>
-      <span class="ipa-media-count" id="ipaMediaCount">0 files</span>
+
+  const root = document.createElement('section');
+  root.id = 'ipaMediaManager';
+  root.className = 'ipa-mm-card';
+  root.innerHTML = `
+    <div style="display:flex;justify-content:space-between;gap:1rem;align-items:flex-start;flex-wrap:wrap;">
+      <div>
+        <h2>Website Media</h2>
+        <p class="ipa-mm-help">Manage each part of the website separately. Gallery photos support editable headings and captions. Single-slot sections replace their current media when a new file is uploaded.</p>
+      </div>
+      <span class="ipa-mm-status" data-mm-status>Connecting…</span>
     </div>
-    <div class="ipa-upload">
-      <input id="ipaMediaFiles" type="file" accept="image/*,video/mp4,video/webm,video/quicktime" multiple>
-      <button type="button" class="admin-save" id="ipaUploadMedia">Upload selected</button>
-      <span class="admin-msg" id="ipaMediaStatus">Connecting to media library…</span>
-    </div>
-    <div id="ipaMediaList" class="ipa-media-list"><p class="ipa-media-empty">Loading…</p></div>`;
-  shell.insertBefore(card, shell.firstElementChild?.nextSibling || shell.firstChild);
-  document.getElementById('ipaUploadMedia').addEventListener('click', uploadAdminMedia);
+    <div class="ipa-mm-wrap"></div>`;
+  shell.appendChild(root);
+
   try {
     await ensureAdminSession();
-    mediaStatus('Connected');
-    await refreshAdminMedia();
+    await refreshAdminManager();
   } catch (err) {
-    mediaStatus(err.message || 'Media library unavailable. Run the Supabase media SQL setup first.', true);
-    renderAdminList([]);
-  }
-}
-
-function renderPublicMedia(items) {
-  const images = (items || []).filter((x) => x.kind === 'image');
-  const videos = (items || []).filter((x) => x.kind === 'video');
-  const track = document.getElementById('cfTrack');
-  if (track && images.length) {
-    track.innerHTML = images.map((item, i) => `
-      <div class="cf-slide" data-index="${i}">
-        <div class="cf-media"><img src="${escapeHtml(publicUrl(item.path))}" alt="${escapeHtml(item.title || 'IPA Church Elappara photo')}"></div>
-        <p class="cf-caption">${escapeHtml(item.caption || item.title || 'IPA Church Elappara')}</p>
-      </div>`).join('');
-
-    const controls = document.querySelector('.cf-controls');
-    if (controls) {
-      controls.innerHTML = '<button class="cf-arrow" id="cfPrev" aria-label="Previous photo">&lsaquo;</button><div class="cf-dots" id="cfDots"></div><button class="cf-arrow" id="cfNext" aria-label="Next photo">&rsaquo;</button>';
-      initPublicCoverflow();
-    }
-  }
-
-  if (videos.length) {
-    const video = document.querySelector('.watch-frame video');
-    if (video) {
-      video.src = publicUrl(videos[0].path);
-      video.load();
-    }
+    console.error(err);
+    adminStatus(err.message || 'Media library unavailable.', true);
   }
 }
 
@@ -321,18 +369,60 @@ function initPublicCoverflow() {
   render();
 }
 
+function renderPublicGallery(items) {
+  const gallery = sectionItems(items, 'gallery');
+  const track = document.getElementById('cfTrack');
+  if (!track || !gallery.length) return;
+  track.innerHTML = gallery.map((item, i) => `
+    <div class="cf-slide" data-index="${i}">
+      <div class="cf-media"><img src="${escapeHtml(publicUrl(item.path))}" alt="${escapeHtml(item.title || 'IPA Church Elappara photo')}"></div>
+      <p class="cf-caption">${escapeHtml(item.caption || item.title || 'IPA Church Elappara')}</p>
+    </div>`).join('');
+  initPublicCoverflow();
+}
+
+function renderPublicSingleMedia(items, section, selector) {
+  const item = sectionItems(items, section)[0];
+  if (!item) return;
+  const el = document.querySelector(selector);
+  if (!el) return;
+  const url = publicUrl(item.path);
+  if (el.tagName === 'IMG') {
+    el.src = url;
+    if (item.title) el.alt = item.title;
+  } else if (el.tagName === 'VIDEO') {
+    el.src = url;
+    el.load();
+  }
+}
+
+function renderPublicMinistry(items, section, index) {
+  const item = sectionItems(items, section)[0];
+  const cards = document.querySelectorAll('#ministries .ministry-card');
+  const card = cards[index];
+  if (!item || !card) return;
+  card.style.setProperty('--bg-img', `url("${publicUrl(item.path)}")`);
+}
+
 async function loadPublicMedia() {
   const sb = await getClient();
   if (!sb) return;
   const { data, error } = await sb.from(TABLE)
-    .select('id,path,kind,title,caption,sort_order,created_at')
+    .select('id,path,kind,section,title,caption,sort_order,created_at')
     .order('sort_order', { ascending: true })
     .order('created_at', { ascending: true });
   if (error) {
     console.warn('IPA public media load skipped:', error);
     return;
   }
-  if (data?.length) renderPublicMedia(data);
+  const items = data || [];
+
+  renderPublicSingleMedia(items, 'home_moment', '.hero-card .hero-photo img');
+  renderPublicMinistry(items, 'ministry_youth', 0);
+  renderPublicMinistry(items, 'ministry_worship', 1);
+  renderPublicMinistry(items, 'ministry_family', 2);
+  renderPublicGallery(items);
+  renderPublicSingleMedia(items, 'sunday_service_video', '.watch-frame video');
 }
 
 window.IPAMediaManager = { setupAdmin, loadPublicMedia };
