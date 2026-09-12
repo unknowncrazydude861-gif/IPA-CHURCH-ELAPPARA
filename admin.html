@@ -14,10 +14,10 @@
   <div class="strip-light" style="width:70px;"></div>
   <h1 style="font-size:1.5rem;">IPA Church Elappara</h1>
   <p style="color:var(--muted);max-width:32ch;">Enter the admin password to edit the live site content.</p>
-  <form id="gateForm">
-    <input type="password" id="gateInput" placeholder="Password" autocomplete="off" autofocus>
+  <form id="gateForm" autocomplete="off">
+    <input type="password" id="gateInput" placeholder="Password" autocomplete="current-password" required>
     <button type="submit" class="btn primary" style="justify-content:center;">Unlock</button>
-    <span class="err" id="gateErr"></span>
+    <span class="err" id="gateErr" role="alert"></span>
   </form>
   <a href="index.html" style="font-size:0.82rem;color:var(--muted-2);border-bottom:1px dotted var(--line-strong);">&larr; Back to site</a>
 </div>
@@ -30,10 +30,7 @@
         <img src="images/logo.png" alt="" onerror="this.classList.add('cf-broken');">
         <svg class="mono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M12 2v20M6.5 8H17.5"/></svg>
       </span>
-      <span class="brand-text">
-        <strong>IPA Church</strong>
-        <span>Admin panel</span>
-      </span>
+      <span class="brand-text"><strong>IPA Church</strong><span>Admin panel</span></span>
     </a>
     <div style="display:flex;align-items:center;gap:0.8rem;">
       <button class="theme-toggle" aria-label="Toggle light and dark theme">
@@ -50,106 +47,64 @@
       <span class="admin-status" id="adminStatus">Connecting…</span>
     </div>
 
-    <!-- Hero -->
     <div class="admin-card">
       <h2>Hero</h2>
       <div class="admin-field"><label>Eyebrow</label><input type="text" id="f-hero-eyebrow"></div>
       <div class="admin-field"><label>Headline</label><input type="text" id="f-hero-headline"></div>
       <div class="admin-field"><label>Lead paragraph</label><textarea id="f-hero-lead" rows="3"></textarea></div>
-      <div class="admin-btn-row">
-        <button class="admin-save" id="save-hero">Save hero</button>
-        <span class="admin-msg" id="msg-hero"></span>
-      </div>
+      <div class="admin-btn-row"><button class="admin-save" id="save-hero">Save hero</button><span class="admin-msg" id="msg-hero"></span></div>
     </div>
 
-    <!-- Announcement -->
     <div class="admin-card">
       <h2>Announcement banner</h2>
       <label class="admin-checkbox"><input type="checkbox" id="f-announce-enabled"> Show banner at the top of the site</label>
       <div class="admin-field" style="margin-top:0.8rem;"><label>Banner text</label><input type="text" id="f-announce-text" placeholder="e.g. Special Christmas Carol Night this Sunday, 6 PM"></div>
-      <div class="admin-btn-row">
-        <button class="admin-save" id="save-announce">Save announcement</button>
-        <span class="admin-msg" id="msg-announce"></span>
-      </div>
+      <div class="admin-btn-row"><button class="admin-save" id="save-announce">Save announcement</button><span class="admin-msg" id="msg-announce"></span></div>
     </div>
 
-    <!-- Service times -->
     <div class="admin-card">
       <h2>Service times</h2>
       <div id="timesRows"></div>
       <div class="admin-btn-row"><button type="button" class="admin-small-btn" id="addTimeRow">+ Add a service</button></div>
       <div class="admin-field" style="margin-top:1.2rem;"><label>Languages (comma separated)</label><input type="text" id="f-languages" placeholder="Malayalam, Tamil"></div>
-      <div class="admin-btn-row">
-        <button class="admin-save" id="save-times">Save service times</button>
-        <span class="admin-msg" id="msg-times"></span>
-      </div>
+      <div class="admin-btn-row"><button class="admin-save" id="save-times">Save service times</button><span class="admin-msg" id="msg-times"></span></div>
     </div>
 
-    <!-- Ministries -->
     <div class="admin-card">
       <h2>Ministries (3 cards shown on the site)</h2>
-      <div class="admin-row" style="margin-bottom:0.6rem;">
-        <input type="text" id="f-min-tag-0" placeholder="Tag, e.g. Youth">
-        <input type="text" id="f-min-title-0" placeholder="Title, e.g. Youth Ministry">
-      </div>
+      <div class="admin-row" style="margin-bottom:0.6rem;"><input type="text" id="f-min-tag-0" placeholder="Tag, e.g. Youth"><input type="text" id="f-min-title-0" placeholder="Title, e.g. Youth Ministry"></div>
       <div class="admin-field"><textarea id="f-min-desc-0" rows="2" placeholder="Description"></textarea></div>
-      <div class="admin-row" style="margin-bottom:0.6rem;">
-        <input type="text" id="f-min-tag-1" placeholder="Tag, e.g. Worship">
-        <input type="text" id="f-min-title-1" placeholder="Title, e.g. Worship Team">
-      </div>
+      <div class="admin-row" style="margin-bottom:0.6rem;"><input type="text" id="f-min-tag-1" placeholder="Tag, e.g. Worship"><input type="text" id="f-min-title-1" placeholder="Title, e.g. Worship Team"></div>
       <div class="admin-field"><textarea id="f-min-desc-1" rows="2" placeholder="Description"></textarea></div>
-      <div class="admin-row" style="margin-bottom:0.6rem;">
-        <input type="text" id="f-min-tag-2" placeholder="Tag, e.g. Family">
-        <input type="text" id="f-min-title-2" placeholder="Title, e.g. Church Family">
-      </div>
+      <div class="admin-row" style="margin-bottom:0.6rem;"><input type="text" id="f-min-tag-2" placeholder="Tag, e.g. Family"><input type="text" id="f-min-title-2" placeholder="Title, e.g. Church Family"></div>
       <div class="admin-field"><textarea id="f-min-desc-2" rows="2" placeholder="Description"></textarea></div>
-      <div class="admin-btn-row">
-        <button class="admin-save" id="save-ministries">Save ministries</button>
-        <span class="admin-msg" id="msg-ministries"></span>
-      </div>
+      <div class="admin-btn-row"><button class="admin-save" id="save-ministries">Save ministries</button><span class="admin-msg" id="msg-ministries"></span></div>
     </div>
 
-    <!-- Pastor -->
     <div class="admin-card">
       <h2>Leadership</h2>
-      <div class="admin-row">
-        <div class="admin-field"><label>Name</label><input type="text" id="f-pastor-name"></div>
-        <div class="admin-field"><label>Role</label><input type="text" id="f-pastor-role" placeholder="e.g. Pastor"></div>
-      </div>
+      <div class="admin-row"><div class="admin-field"><label>Name</label><input type="text" id="f-pastor-name"></div><div class="admin-field"><label>Role</label><input type="text" id="f-pastor-role" placeholder="e.g. Pastor"></div></div>
       <div class="admin-field"><label>Short bio / note</label><textarea id="f-pastor-bio" rows="3"></textarea></div>
       <label class="admin-checkbox"><input type="checkbox" id="f-pastor-confirmed"> This information is confirmed and current (hides the "please confirm" note on the site)</label>
-      <div class="admin-btn-row">
-        <button class="admin-save" id="save-pastor">Save leadership</button>
-        <span class="admin-msg" id="msg-pastor"></span>
-      </div>
+      <div class="admin-btn-row"><button class="admin-save" id="save-pastor">Save leadership</button><span class="admin-msg" id="msg-pastor"></span></div>
     </div>
 
-    <!-- Contact -->
     <div class="admin-card">
       <h2>Contact &amp; location</h2>
       <label style="font-size:0.78rem;color:var(--muted-2);">Phone numbers</label>
       <div id="phoneRows" style="margin-top:0.5rem;"></div>
       <div class="admin-btn-row"><button type="button" class="admin-small-btn" id="addPhoneRow">+ Add a number</button></div>
-
-      <div class="admin-row" style="margin-top:1rem;">
-        <div class="admin-field"><label>Email</label><input type="email" id="f-email"></div>
-        <div class="admin-field"><label>Address</label><input type="text" id="f-address"></div>
-      </div>
+      <div class="admin-row" style="margin-top:1rem;"><div class="admin-field"><label>Email</label><input type="email" id="f-email"></div><div class="admin-field"><label>Address</label><input type="text" id="f-address"></div></div>
       <div class="admin-field"><label>Map search text (used for the embedded map)</label><input type="text" id="f-mapquery"></div>
-      <div class="admin-row">
-        <div class="admin-field"><label>Instagram URL</label><input type="url" id="f-instagram"></div>
-        <div class="admin-field"><label>YouTube URL</label><input type="url" id="f-youtube"></div>
-      </div>
-      <div class="admin-btn-row">
-        <button class="admin-save" id="save-contact">Save contact</button>
-        <span class="admin-msg" id="msg-contact"></span>
-      </div>
+      <div class="admin-row"><div class="admin-field"><label>Instagram URL</label><input type="url" id="f-instagram"></div><div class="admin-field"><label>YouTube URL</label><input type="url" id="f-youtube"></div></div>
+      <div class="admin-btn-row"><button class="admin-save" id="save-contact">Save contact</button><span class="admin-msg" id="msg-contact"></span></div>
     </div>
 
     <p style="font-size:0.8rem;color:var(--muted-2);margin-top:2rem;">Changes appear on the live site immediately — no republishing needed.</p>
   </div>
 </div>
 
-<script type="module" src="admin.js"></script>
+<!-- Cache-busted module URL makes GitHub Pages pick up the latest admin script. -->
+<script type="module" src="admin.js?v=20260912"></script>
 </body>
 </html>
