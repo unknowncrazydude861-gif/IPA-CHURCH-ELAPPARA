@@ -196,7 +196,7 @@ async function uploadAdminMedia() {
         kind,
         title: titleFromName(file.name),
         caption: '',
-        sort_order: Date.now() + uploaded,
+        sort_order: uploaded + 1,
       });
       if (rowError) {
         await sb.storage.from(BUCKET).remove([path]);
@@ -308,25 +308,41 @@ function initPublicCoverflow() {
   });
   prev.onclick = () => go(current - 1);
   next.onclick = () => go(current + 1);
-  slides.forEach((slide, i) => slide.addEventListener('click', () => { if (i !== current) go(i); }));
-  const start = () => { if (!reduceMotion) { clearInterval(timer); timer = setInterval(() => go(current + 1), 4800); } };
-  const stop = () => clearInterval(timer);
-  stage.onmouseenter = stop;
-  stage.onmouseleave = start;
-  render();
-  start();
-}
-
-async function setupPublic() {
-  const result = await listMedia();
-  if (!result.error && result.data?.length) renderPublicMedia(result.data);
-}
-
-(async function boot() {
-  if (!document || !supabaseReady) return;
-  if (location.pathname.endsWith('/admin.html') || location.pathname.endsWith('admin.html')) {
-    await setupAdmin();
-  } else if (document.getElementById('cfStage')) {
-    await setupPublic();
+  slides.forEach((slide, i) => slide.addEventListener('click', () => i !== current && go(i)));
+  if (!reduceMotion) {
+    const stop = () => { if (timer) clearInterval(timer); timer = null; };
+    const start = () => { stop(); timer = setInterval(() => go(current + 1), 4800); };
+    stage.addEventListener('mouseenter', stop);
+    stage.addEventListener('mouseleave', start);
+    stage.addEventListener('touchstart', stop, { passive: true });
+    stage.addEventListener('touchend', start, { passive: true });
+    start();
   }
-})();
+  render();
+}
+
+async function loadPublicMedia() {
+  const sb = await getClient();
+  if (!sb) return;
+  const { data, error } = await sb.from(TABLE)
+    .select('id,path,kind,title,caption,sort_order,created_at')
+    .order('sort_order', { ascending: true })
+    .order('created_at', { ascending: true });
+  if (error) {
+    console.warn('IPA public media load skipped:', error);
+    return;
+  }
+  if (data?.length) renderPublicMedia(data);
+}
+
+window.IPAMediaManager = { setupAdmin, loadPublicMedia };
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => {
+    if (document.getElementById('panel')) setupAdmin();
+    else loadPublicMedia();
+  });
+} else {
+  if (document.getElementById('panel')) setupAdmin();
+  else loadPublicMedia();
+}
