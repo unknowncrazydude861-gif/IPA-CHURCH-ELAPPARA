@@ -264,9 +264,18 @@ function renderContent(data) {
 function makeSocial(label, href) {
   const a = document.createElement('a');
   a.href = href;
+  a.className = label === 'YouTube' ? 'social-3d social-youtube-3d' : 'social-3d';
   if (label === 'Instagram') {
     a.textContent = 'Instagram';
     a.dataset.instagramBrandOrbsTarget = 'true';
+  } else if (label === 'YouTube') {
+    a.innerHTML = `
+      <span class="yt3d-shell" aria-hidden="true">
+        <span class="yt3d-glass"></span>
+        <span class="yt3d-word">You</span>
+        <span class="yt3d-play"></span>
+      </span>
+      <span class="social-3d-label">YouTube</span>`;
   } else {
     a.textContent = label;
   }
@@ -297,6 +306,221 @@ function makeSocial(label, href) {
     console.warn('Supabase content load skipped:', err);
     mountInstagramBrandOrbs();
   }
+})();
+
+/* ---------------- 3D button + YouTube UI layer ---------------- */
+(function mount3DUI() {
+  const styleId = 'ipa-3d-ui-style';
+  if (document.getElementById(styleId)) return;
+
+  const style = document.createElement('style');
+  style.id = styleId;
+  style.textContent = `
+    :root{--ipa-red:#ff2028;--ipa-red-dark:#8f090d;--ipa-edge:#ff4148;--ipa-black:#030303;}
+
+    /* tactile 3D treatment for every real button and primary CTA */
+    button:not(.menu-btn),
+    .btn,
+    nav.links a.cta,
+    nav.links a[href="admin.html"],
+    .social-3d{
+      position:relative;
+      transform:translateY(0) translateZ(0);
+      transition:transform .18s cubic-bezier(.2,.75,.2,1), box-shadow .18s ease, filter .18s ease, border-color .18s ease;
+      box-shadow:
+        0 1px 0 rgba(255,255,255,.16) inset,
+        0 -1px 0 rgba(0,0,0,.34) inset,
+        0 7px 0 rgba(0,0,0,.26),
+        0 14px 28px rgba(0,0,0,.28);
+      transform-style:preserve-3d;
+      will-change:transform;
+    }
+    button:not(.menu-btn):hover,
+    .btn:hover,
+    nav.links a.cta:hover,
+    nav.links a[href="admin.html"]:hover,
+    .social-3d:hover{
+      transform:translateY(-3px) perspective(700px) rotateX(3deg);
+      box-shadow:
+        0 1px 0 rgba(255,255,255,.22) inset,
+        0 -1px 0 rgba(0,0,0,.34) inset,
+        0 10px 0 rgba(0,0,0,.26),
+        0 22px 34px rgba(0,0,0,.36);
+      filter:brightness(1.05);
+    }
+    button:not(.menu-btn):active,
+    .btn:active,
+    nav.links a.cta:active,
+    nav.links a[href="admin.html"]:active,
+    .social-3d:active{
+      transform:translateY(5px) perspective(700px) rotateX(-2deg);
+      box-shadow:
+        0 1px 0 rgba(255,255,255,.12) inset,
+        0 -1px 0 rgba(0,0,0,.38) inset,
+        0 2px 0 rgba(0,0,0,.28),
+        0 6px 12px rgba(0,0,0,.26);
+    }
+
+    .theme-toggle{
+      overflow:hidden;
+      background:linear-gradient(145deg, color-mix(in srgb,var(--bg-elev) 94%,white 6%), var(--bg-elev-2));
+      border-color:var(--line-strong);
+    }
+
+    .cf-arrow{
+      min-width:42px;
+      min-height:42px;
+      border-radius:10px!important;
+      background:linear-gradient(145deg, rgba(255,255,255,.09), rgba(255,255,255,.025));
+      border:1px solid var(--line-strong)!important;
+      backdrop-filter:blur(10px);
+    }
+    .cf-dot{
+      transform:translateZ(0);
+      transition:transform .18s ease, width .2s ease, box-shadow .18s ease, background .18s ease;
+    }
+    .cf-dot:hover{transform:scale(1.25) translateZ(6px);box-shadow:0 5px 14px rgba(0,0,0,.3);}
+    .cf-dot.active{box-shadow:0 4px 12px rgba(0,0,0,.28),0 0 16px rgba(var(--gold-rgb),.24);}
+
+    /* YouTube button styled like the supplied glossy black/red reference */
+    .social-youtube-3d{
+      display:inline-flex!important;
+      align-items:center;
+      gap:.7rem;
+      padding:.34rem .65rem .34rem .4rem!important;
+      min-height:58px;
+      border-radius:18px!important;
+      border:1px solid rgba(255,43,51,.72)!important;
+      background:
+        linear-gradient(160deg, rgba(255,255,255,.16) 0%, rgba(255,255,255,.05) 20%, rgba(0,0,0,.96) 48%, rgba(3,3,3,.99) 100%)!important;
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.16),
+        inset 0 -10px 24px rgba(0,0,0,.58),
+        0 0 0 1px rgba(255,0,10,.08),
+        0 10px 0 #420407,
+        0 18px 30px rgba(0,0,0,.42),
+        0 0 22px rgba(255,24,32,.18)!important;
+      perspective:900px;
+      transform-style:preserve-3d;
+    }
+    .social-youtube-3d::before{
+      content:"";
+      position:absolute;
+      inset:4px;
+      border-radius:14px;
+      border-top:1px solid rgba(255,255,255,.18);
+      pointer-events:none;
+    }
+    .social-youtube-3d::after{
+      content:"";
+      position:absolute;
+      width:82%;
+      height:22px;
+      left:9%;
+      top:-6px;
+      border-radius:50%;
+      background:radial-gradient(ellipse at center, rgba(255,255,255,.14), transparent 68%);
+      transform:rotateX(72deg) translateZ(18px);
+      pointer-events:none;
+    }
+    .yt3d-shell{
+      position:relative;
+      display:block;
+      width:78px;
+      height:46px;
+      border-radius:14px;
+      background:linear-gradient(155deg,#3a3a3e 0%,#111113 31%,#020202 67%,#000 100%);
+      border:1px solid rgba(255,47,55,.72);
+      box-shadow:
+        inset 0 7px 11px rgba(255,255,255,.12),
+        inset 0 -10px 14px rgba(0,0,0,.72),
+        0 0 11px rgba(255,21,30,.17),
+        0 4px 0 #5e070a;
+      transform:translateZ(12px) rotateX(2deg);
+      overflow:hidden;
+    }
+    .yt3d-glass{
+      position:absolute;
+      inset:3px 6px 26px 6px;
+      border-radius:10px 10px 50% 50%;
+      background:linear-gradient(180deg,rgba(255,255,255,.22),rgba(255,255,255,0));
+      opacity:.65;
+    }
+    .yt3d-word{
+      position:absolute;
+      left:11px;
+      top:8px;
+      font-family:Inter,Arial,sans-serif;
+      font-size:20px;
+      line-height:1;
+      font-weight:500;
+      letter-spacing:-.06em;
+      color:#080808;
+      -webkit-text-stroke:1px rgba(255,255,255,.16);
+      text-shadow:1px 1px 0 rgba(255,255,255,.08),0 0 7px rgba(255,35,42,.2);
+    }
+    .yt3d-play{
+      position:absolute;
+      right:10px;
+      top:11px;
+      width:0;
+      height:0;
+      border-top:12px solid transparent;
+      border-bottom:12px solid transparent;
+      border-left:19px solid var(--ipa-red);
+      filter:drop-shadow(0 0 4px rgba(255,32,40,.75));
+      transform:translateZ(5px);
+    }
+    .yt3d-play::after{
+      content:"";
+      position:absolute;
+      left:-15px;
+      top:-7px;
+      width:2px;
+      height:14px;
+      background:#fff;
+      opacity:.45;
+      box-shadow:0 0 7px rgba(255,40,48,.75);
+    }
+    .social-3d-label{font-size:.82rem;letter-spacing:.02em;color:var(--ink);font-weight:600;}
+
+    [data-theme="light"] .social-youtube-3d{
+      background:linear-gradient(160deg,rgba(255,255,255,.94),rgba(35,35,36,.88) 45%,rgba(0,0,0,.97))!important;
+      color:#fff;
+    }
+
+    @media (max-width:620px){
+      .social-youtube-3d{min-height:54px;padding-right:.55rem!important;}
+      .yt3d-shell{width:72px;height:43px;}
+      .social-3d-label{display:none;}
+    }
+
+    @media (prefers-reduced-motion:reduce){
+      button:not(.menu-btn),.btn,nav.links a.cta,nav.links a[href="admin.html"],.social-3d{transition:none!important;}
+    }
+  `;
+  document.head.appendChild(style);
+
+  const decorate = () => {
+    document.querySelectorAll('#socialRow a').forEach((a) => {
+      if (!a.classList.contains('social-3d')) a.classList.add('social-3d');
+      if ((a.textContent || '').trim() === 'YouTube' && !a.querySelector('.yt3d-shell')) {
+        a.classList.add('social-youtube-3d');
+        a.innerHTML = `
+          <span class="yt3d-shell" aria-hidden="true">
+            <span class="yt3d-glass"></span>
+            <span class="yt3d-word">You</span>
+            <span class="yt3d-play"></span>
+          </span>
+          <span class="social-3d-label">YouTube</span>`;
+      }
+    });
+  };
+
+  decorate();
+  const observer = new MutationObserver(decorate);
+  const socialRow = document.getElementById('socialRow');
+  if (socialRow) observer.observe(socialRow, { childList: true, subtree: true });
 })();
 
 /* ---------------- ultra cinematic 3D layer ---------------- */
