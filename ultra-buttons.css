@@ -1,0 +1,161 @@
+/* ============================================================
+   Ultra 3D button system — glass, depth, animated spectral edge
+   ============================================================ */
+:root{
+  --uib-gold: var(--gold-2, #efc978);
+  --uib-violet: var(--violet, #8b6fe0);
+  --uib-cyan: var(--cool, #3fb6c9);
+  --uib-surface: rgba(255,255,255,.055);
+}
+
+.btn,
+.admin-save,
+.admin-small-btn,
+.cf-arrow,
+.cf-dot,
+.social-row a,
+nav.links a.cta,
+.theme-toggle,
+.announce button{
+  position:relative;
+  isolation:isolate;
+  overflow:hidden;
+  transform:translateZ(0);
+}
+
+.btn,
+.admin-save,
+.admin-small-btn,
+.social-row a,
+nav.links a.cta{
+  border-radius:999px !important;
+  border:1px solid rgba(255,255,255,.14) !important;
+  background:
+    radial-gradient(circle at 18% 15%, rgba(255,255,255,.18), transparent 30%),
+    linear-gradient(145deg, rgba(255,255,255,.08), rgba(255,255,255,.025));
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.14),
+    inset 0 -10px 24px rgba(0,0,0,.16),
+    0 12px 28px rgba(0,0,0,.24),
+    0 0 0 1px rgba(var(--gold-rgb),.04);
+  backdrop-filter:blur(16px) saturate(1.25);
+  -webkit-backdrop-filter:blur(16px) saturate(1.25);
+  transition:transform .35s var(--ease), box-shadow .35s var(--ease), border-color .35s var(--ease), color .35s var(--ease), background .35s var(--ease);
+}
+
+.btn::before,
+.admin-save::before,
+.admin-small-btn::before,
+.social-row a::before,
+nav.links a.cta::before,
+.cf-arrow::before,
+.theme-toggle::before{
+  content:"";
+  position:absolute;
+  inset:-2px;
+  z-index:-1;
+  padding:1px;
+  border-radius:inherit;
+  background:conic-gradient(from 210deg, transparent 0 24%, rgba(var(--gold-rgb),.9) 34%, rgba(var(--violet-rgb),.9) 46%, rgba(var(--cool-rgb),.9) 58%, transparent 70% 100%);
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor;
+  mask-composite:exclude;
+  opacity:.52;
+  animation:uibSpin 7s linear infinite;
+  pointer-events:none;
+}
+
+.btn::after,
+.admin-save::after,
+.admin-small-btn::after,
+.social-row a::after,
+nav.links a.cta::after,
+.cf-arrow::after,
+.theme-toggle::after{
+  content:"";
+  position:absolute;
+  top:-120%;
+  left:-35%;
+  width:34%;
+  height:340%;
+  transform:rotate(25deg) translateX(-240%);
+  background:linear-gradient(90deg, transparent, rgba(255,255,255,.45), transparent);
+  filter:blur(6px);
+  animation:uibSheen 4.6s ease-in-out infinite;
+  pointer-events:none;
+}
+
+.btn:hover,
+.admin-save:hover,
+.admin-small-btn:hover,
+.social-row a:hover,
+nav.links a.cta:hover,
+.cf-arrow:hover,
+.theme-toggle:hover{
+  transform:translateY(-3px) scale(1.025);
+  border-color:rgba(var(--gold-rgb),.65) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.2),
+    inset 0 -10px 28px rgba(0,0,0,.18),
+    0 18px 38px rgba(0,0,0,.34),
+    0 0 26px rgba(var(--gold-rgb),.14);
+}
+
+.btn:active,
+.admin-save:active,
+.admin-small-btn:active,
+.social-row a:active,
+nav.links a.cta:active,
+.cf-arrow:active,
+.theme-toggle:active{
+  transform:translateY(0) scale(.985);
+}
+
+.btn.primary,
+.admin-save,
+nav.links a.cta{
+  color:#1a1409 !important;
+  background:
+    radial-gradient(circle at 18% 15%, rgba(255,255,255,.36), transparent 28%),
+    linear-gradient(135deg, #f6d88f 0%, var(--uib-gold) 46%, #a97424 100%);
+  border-color:rgba(255,255,255,.36) !important;
+}
+
+.btn.ghost{color:var(--ink) !important;}
+
+.cf-arrow,
+.theme-toggle{
+  border:1px solid rgba(255,255,255,.14) !important;
+  background:rgba(255,255,255,.035);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.1),0 10px 24px rgba(0,0,0,.22);
+  backdrop-filter:blur(14px);
+  -webkit-backdrop-filter:blur(14px);
+}
+
+.cf-arrow{border-radius:50% !important;}
+.cf-arrow::before,.theme-toggle::before{border-radius:50%;}
+
+.cf-dot{
+  border:1px solid rgba(255,255,255,.12) !important;
+  background:rgba(255,255,255,.08) !important;
+  box-shadow:inset 0 1px 1px rgba(255,255,255,.12),0 2px 9px rgba(0,0,0,.24);
+}
+.cf-dot.active{
+  background:radial-gradient(circle at 35% 30%, #fff6cf, var(--uib-gold) 58%, #8c641e) !important;
+  box-shadow:0 0 18px rgba(var(--gold-rgb),.55), inset 0 1px 2px rgba(255,255,255,.5);
+}
+
+.announce button{border-radius:50%;padding:.35rem .55rem;}
+
+@keyframes uibSpin{to{transform:rotate(360deg)}}
+@keyframes uibSheen{
+  0%,22%{transform:rotate(25deg) translateX(-240%);opacity:0}
+  30%{opacity:.85}
+  46%{transform:rotate(25deg) translateX(420%);opacity:0}
+  100%{transform:rotate(25deg) translateX(420%);opacity:0}
+}
+
+@media (prefers-reduced-motion:reduce){
+  .btn::before,.admin-save::before,.admin-small-btn::before,.social-row a::before,nav.links a.cta::before,.cf-arrow::before,.theme-toggle::before,
+  .btn::after,.admin-save::after,.admin-small-btn::after,.social-row a::after,nav.links a.cta::after,.cf-arrow::after,.theme-toggle::after{animation:none!important}
+}
