@@ -10,6 +10,15 @@ const ADMIN_PASSWORD = 'admin861';
 
 import { supabaseUrl, supabaseAnonKey, supabaseReady, SUPABASE_SDK } from './supabase-config.js';
 
+/* ---------------- shared deep 3D button styling ---------------- */
+if (!document.querySelector('link[data-ultra-buttons]')) {
+  const link = document.createElement('link');
+  link.rel = 'stylesheet';
+  link.href = './ultra-buttons.css?v=20260914-deep';
+  link.dataset.ultraButtons = 'true';
+  document.head.appendChild(link);
+}
+
 /* ---------------- theme toggle (same behaviour as the public site) ---------------- */
 (function () {
   const root = document.documentElement;
