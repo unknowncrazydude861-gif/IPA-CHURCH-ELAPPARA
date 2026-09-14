@@ -288,3 +288,6 @@ function makeSocial(label, href) {
     console.warn('Supabase content load skipped:', err);
   }
 })();
+
+/* ---------------- ultra cinematic 3D layer ---------------- */
+import('./ultra3d.js').catch((err) => console.warn('IPA 3D layer skipped:', err));
