@@ -326,3 +326,26 @@ function makeSocial(label, href) {
 
 /* ---------------- ultra cinematic 3D layer ---------------- */
 import('./ultra3d.js').catch((err) => console.warn('IPA 3D layer skipped:', err));
+
+/* ---------------- installable app (PWA) ---------------- */
+(function () {
+  if (!document.querySelector('link[rel="manifest"]')) {
+    const manifest = document.createElement('link');
+    manifest.rel = 'manifest';
+    manifest.href = './manifest.webmanifest?v=20260916';
+    document.head.appendChild(manifest);
+  }
+
+  const theme = document.querySelector('meta[name="theme-color"]') || document.createElement('meta');
+  theme.name = 'theme-color';
+  theme.content = '#0b0908';
+  if (!theme.parentNode) document.head.appendChild(theme);
+
+  if ('serviceWorker' in navigator && window.isSecureContext) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js', { scope: './' })
+        .then(() => console.log('IPA Church app shell ready'))
+        .catch((err) => console.warn('App install shell unavailable:', err));
+    }, { once: true });
+  }
+})();
