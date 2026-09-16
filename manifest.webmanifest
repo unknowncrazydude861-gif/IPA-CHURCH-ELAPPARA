@@ -1,0 +1,26 @@
+{
+  "name": "IPA Church Elappara",
+  "short_name": "IPA Church",
+  "description": "IPA Church Elappara — Indian Pentecostal Assembly",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0b0908",
+  "theme_color": "#0b0908",
+  "categories": ["lifestyle", "religion"],
+  "icons": [
+    {
+      "src": "images/logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "images/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
