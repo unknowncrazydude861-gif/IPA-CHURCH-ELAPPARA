@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0b0908">
+<title>Church Branches — IPA Church Elappara</title>
+<meta name="description" content="Church branches and pastors of IPA Church Elappara.">
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="branches.css">
+</head>
+<body>
+<header class="site-nav" id="siteNav">
+  <a href="index.html" class="brand">
+    <span class="brand-mark"><img src="images/logo.png" alt="" onerror="this.classList.add('cf-broken');"><svg class="mono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M12 2v20M6.5 8H17.5"/></svg></span>
+    <span class="brand-text"><strong>IPA Church</strong><span>Elappara · Idukki</span></span>
+  </a>
+  <nav class="links" id="navLinks">
+    <a href="index.html">Home</a>
+    <a href="index.html#about">About</a>
+    <a href="index.html#ministries">Ministries</a>
+    <a href="index.html#gallery">Gallery</a>
+    <a href="branches.html" class="branch-nav-active">Branches</a>
+    <a href="index.html#visit" class="cta">Visit</a>
+  </nav>
+  <div class="branch-nav-actions">
+    <button class="theme-toggle" aria-label="Toggle light and dark theme">
+      <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2.4M12 19.6V22M4.2 4.2l1.7 1.7M18.1 18.1l1.7 1.7M2 12h2.4M19.6 12H22M4.2 19.8l1.7-1.7M18.1 5.9l1.7-1.7"/></svg>
+      <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5Z"/></svg>
+    </button>
+    <button class="menu-btn" id="menuBtn" aria-label="Toggle menu" aria-expanded="false"><span></span><span></span><span></span></button>
+  </div>
+</header>
+<main>
+  <section class="branches-hero">
+    <div class="branches-hero-glow"></div>
+    <div class="wrap">
+      <span class="kicker">Our church family</span>
+      <h1>Church branches</h1>
+      <p>Meet the pastors and branches that are part of our growing church family.</p>
+    </div>
+  </section>
+  <section class="branches-section">
+    <div class="wrap">
+      <div id="branchesStatus" class="branches-status">Loading branches…</div>
+      <div id="branchesGrid" class="branches-grid"></div>
+    </div>
+  </section>
+</main>
+<footer>
+  <div class="wrap"><div class="footer-bottom"><span>© <span id="year"></span> IPA Church, Elappara. All are welcome.</span><a href="index.html">Back to main site</a></div></div>
+</footer>
+<script type="module" src="branches.js?v=20260923"></script>
+<script type="module" src="ultra-buttons-loader.js?v=20260923"></script>
+</body>
+</html>
