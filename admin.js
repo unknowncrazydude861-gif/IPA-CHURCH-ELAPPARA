@@ -71,6 +71,8 @@ let supabase = null;
 let currentData = null;
 
 async function initAdmin() {
+  if (window.__IPA_ADMIN_INIT__) return;
+  window.__IPA_ADMIN_INIT__ = true;
   const statusEl = document.getElementById('adminStatus');
 
   if (!supabaseReady) {
