@@ -87,11 +87,24 @@ body::before{
   content:"";
   position:fixed;inset:0;z-index:-2;
   background:
-    radial-gradient(ellipse 60% 45% at 18% -10%, rgba(var(--gold-rgb),0.10), transparent 60%),
-    radial-gradient(ellipse 55% 40% at 100% 10%, rgba(var(--cool-rgb),0.07), transparent 60%),
+    radial-gradient(ellipse 70% 55% at 16% -6%, rgba(var(--gold-rgb),0.11), transparent 64%),
+    radial-gradient(ellipse 56% 44% at 100% 8%, rgba(var(--violet-rgb),0.08), transparent 64%),
+    radial-gradient(ellipse 58% 44% at 50% 112%, rgba(var(--cool-rgb),0.055), transparent 68%),
     var(--bg);
   transition:background .4s var(--ease);
 }
+
+body::after{
+  content:"";
+  position:fixed;
+  inset:0;
+  z-index:1;
+  pointer-events:none;
+  background:
+    radial-gradient(ellipse at center, transparent 32%, rgba(0,0,0,.12) 72%, rgba(0,0,0,.32) 100%),
+    linear-gradient(180deg, rgba(255,255,255,.018), transparent 20%, transparent 80%, rgba(0,0,0,.11));
+}
+header.site-nav,main,footer{position:relative;z-index:2;}
 
 /* ---------- strip light (signature motif) ---------- */
 .strip-light{
@@ -294,7 +307,7 @@ section{padding:clamp(4.5rem,9vw,7.5rem) 0;scroll-margin-top:5rem;}
 .facts li span:last-child{font-family:'Fraunces',serif;color:var(--ink);text-align:right;}
 
 /* ---------- ministries ---------- */
-.ministries{border-top:1px solid var(--line);background:var(--bg-elev);}
+.ministries{border-top:1px solid var(--line);background:color-mix(in srgb, var(--bg-elev) 90%, transparent);}
 .ministry-wrap{display:grid;grid-template-columns:1.25fr 0.875fr 0.875fr;gap:1rem;}
 .ministry-card{
   min-height:360px;border-radius:6px;overflow:hidden;position:relative;
@@ -310,7 +323,7 @@ section{padding:clamp(4.5rem,9vw,7.5rem) 0;scroll-margin-top:5rem;}
 @media (max-width:920px){ .ministry-wrap{grid-template-columns:1fr;} }
 
 /* ---------- coverflow gallery ---------- */
-.gallery{background:var(--bg);border-top:1px solid var(--line);border-bottom:1px solid var(--line);position:relative;}
+.gallery{background:color-mix(in srgb, var(--bg) 90%, transparent);border-top:1px solid var(--line);border-bottom:1px solid var(--line);position:relative;}
 .cf-stage{position:relative;height:clamp(360px,50vw,520px);perspective:1700px;margin-top:1rem;}
 .cf-track{position:relative;width:100%;height:100%;transform-style:preserve-3d;}
 .cf-slide{
@@ -352,7 +365,7 @@ section{padding:clamp(4.5rem,9vw,7.5rem) 0;scroll-margin-top:5rem;}
 .watch-frame video{width:100%;display:block;aspect-ratio:16/9;background:#000;}
 
 /* ---------- pastor ---------- */
-.pastor{border-top:1px solid var(--line);background:var(--bg-elev);}
+.pastor{border-top:1px solid var(--line);background:color-mix(in srgb, var(--bg-elev) 90%, transparent);}
 .pastor-grid{display:grid;grid-template-columns:0.8fr 1.2fr;gap:clamp(2.5rem,6vw,4.5rem);align-items:center;}
 .pastor-media{position:relative;border-radius:4px;overflow:hidden;aspect-ratio:4/5;box-shadow:var(--shadow);}
 .pastor-media img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
@@ -491,9 +504,11 @@ body{position:relative;isolation:isolate;}
   height:100%;
   border:0;
   z-index:0;
-  opacity:.46;
+  opacity:.28;
   pointer-events:none;
   mix-blend-mode:screen;
-  background:#0a0a0f;
+  filter:saturate(.88) contrast(.96) brightness(.84);
+  background:#07070b;
+  will-change:opacity,filter;
 }
 header.site-nav,main,footer{position:relative;z-index:2;}
