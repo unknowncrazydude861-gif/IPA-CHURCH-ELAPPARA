@@ -141,6 +141,13 @@ function resetForm() {
 }
 document.getElementById('cancel-edit').addEventListener('click', resetForm);
 
+document.getElementById('topAddBranchBtn')?.addEventListener('click', () => {
+  resetForm();
+  const form = document.getElementById('branchForm');
+  if (form) form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  document.getElementById('f-name')?.focus({ preventScroll: true });
+});
+
 function updateThumb(url) {
   const thumb = document.getElementById('formThumb');
   thumb.innerHTML = url
