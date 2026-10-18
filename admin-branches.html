@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — Branches — IPA Church Elappara</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="branches.css">
+</head>
+<body>
+
+<!-- Password gate -->
+<div class="admin-gate" id="gate">
+  <div class="strip-light" style="width:70px;"></div>
+  <h1 style="font-size:1.5rem;">Manage branches</h1>
+  <p style="color:var(--muted);max-width:32ch;">Enter the admin password to add, edit or remove church branches.</p>
+  <form id="gateForm">
+    <input type="password" id="gateInput" placeholder="Password" autocomplete="off" autofocus>
+    <button type="submit" class="btn primary" style="justify-content:center;">Unlock</button>
+    <span class="err" id="gateErr"></span>
+  </form>
+  <a href="admin.html" style="font-size:0.82rem;color:var(--muted-2);border-bottom:1px dotted var(--line-strong);">&larr; Main admin panel</a>
+</div>
+
+<!-- Admin panel -->
+<div id="panel" style="display:none;">
+  <header class="site-nav" style="position:relative;">
+    <a href="admin.html" class="brand">
+      <span class="brand-mark">
+        <img src="images/logo.png" alt="" onerror="this.classList.add('cf-broken');">
+        <svg class="mono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M12 2v20M6.5 8H17.5"/></svg>
+      </span>
+      <span class="brand-text">
+        <strong>IPA Church</strong>
+        <span>Branches admin</span>
+      </span>
+    </a>
+    <div style="display:flex;align-items:center;gap:0.8rem;">
+      <button class="theme-toggle" aria-label="Toggle light and dark theme">
+        <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2.4M12 19.6V22M4.2 4.2l1.7 1.7M18.1 18.1l1.7 1.7M2 12h2.4M19.6 12H22M4.2 19.8l1.7-1.7M18.1 5.9l1.7-1.7"/></svg>
+        <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5Z"/></svg>
+      </button>
+      <a href="branches.html" class="admin-logout" style="margin-right:0.4rem;">View branches page</a>
+      <button class="admin-logout" id="logoutBtn">Log out</button>
+    </div>
+  </header>
+
+  <div class="admin-shell">
+    <div class="admin-header">
+      <h1>Branches</h1>
+      <div class="admin-header-actions">
+        <button type="button" class="admin-save" id="topAddBranchBtn">＋ Add branch</button>
+        <span class="admin-status" id="adminStatus">Connecting…</span>
+      </div>
+    </div>
+
+    <div class="admin-card">
+      <h2>Existing branches</h2>
+      <div class="branch-admin-list" id="branchList">
+        <p style="color:var(--muted);font-size:0.9rem;">Loading…</p>
+      </div>
+
+      <div class="branch-form" id="branchForm">
+        <h3 id="formTitle">Add a branch</h3>
+
+        <div class="branch-upload-row">
+          <div class="thumb" id="formThumb">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.4" style="color:var(--muted-2);"><rect x="3" y="6" width="18" height="13" rx="1.5"/><circle cx="12" cy="12.5" r="3.4"/><path d="M8 6l1.5-2.5h5L16 6"/></svg>
+          </div>
+          <div>
+            <input type="file" id="f-photo-file" accept="image/*">
+            <div class="admin-field" style="margin-top:0.5rem;"><input type="url" id="f-photo-url" placeholder="…or paste a photo URL instead"></div>
+          </div>
+        </div>
+
+        <div class="admin-row">
+          <div class="admin-field"><label>Branch name</label><input type="text" id="f-name" placeholder="e.g. IPA Church Elappara"></div>
+          <div class="admin-field"><label>Pastor name</label><input type="text" id="f-pastor-name"></div>
+        </div>
+        <div class="admin-row">
+          <div class="admin-field"><label>Pastor role</label><input type="text" id="f-pastor-role" placeholder="e.g. Pastor"></div>
+          <div class="admin-field"><label>Phone (optional)</label><input type="tel" id="f-phone"></div>
+        </div>
+        <div class="admin-field"><label>Address (optional)</label><input type="text" id="f-address"></div>
+        <div class="admin-field"><label>Pastor bio / details</label><textarea id="f-bio" rows="3"></textarea></div>
+
+        <div class="admin-btn-row">
+          <button class="admin-save" id="save-branch">Add branch</button>
+          <button class="admin-small-btn" id="cancel-edit" style="display:none;">Cancel edit</button>
+          <span class="admin-msg" id="msg-branch"></span>
+        </div>
+      </div>
+    </div>
+
+    <p style="font-size:0.8rem;color:var(--muted-2);margin-top:1rem;">Changes appear on the public Branches page immediately.</p>
+  </div>
+</div>
+
+<script type="module" src="admin-branches.js?v=20261018"></script>
+<script type="module" src="ultra-buttons-loader.js?v=20261018"></script>
+</body>
+</html>
