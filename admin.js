@@ -41,6 +41,11 @@ const gateInput = document.getElementById('gateInput');
 const gateErr = document.getElementById('gateErr');
 
 function unlock() {
+  const next = new URLSearchParams(window.location.search).get('next');
+  if (next === 'branches') {
+    window.location.replace('admin-branches.html');
+    return;
+  }
   gate.style.display = 'none';
   panel.style.display = 'block';
   initAdmin();
