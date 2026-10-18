@@ -512,3 +512,10 @@ body{position:relative;isolation:isolate;}
   will-change:opacity,filter;
 }
 header.site-nav,main,footer{position:relative;z-index:2;}
+
+
+/* Branch manager top navigation action */
+.admin-header-actions{display:flex;align-items:center;justify-content:flex-end;gap:.8rem;flex-wrap:wrap}
+.admin-top-branches{min-height:44px;padding:.68rem 1rem;font-size:.8rem}
+.admin-top-branches:hover{filter:brightness(1.08)}
+@media(max-width:760px){.admin-header-actions{justify-content:flex-start}.admin-header{align-items:flex-start;flex-wrap:wrap;gap:.85rem}}
