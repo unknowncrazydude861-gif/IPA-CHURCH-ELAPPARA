@@ -10,17 +10,13 @@
 </head>
 <body>
 
-<!-- Password gate -->
+<!-- Fallback shown while the main admin sign-in opens -->
 <div class="admin-gate" id="gate">
   <div class="strip-light" style="width:70px;"></div>
   <h1 style="font-size:1.5rem;">Manage branches</h1>
-  <p style="color:var(--muted);max-width:32ch;">Enter the admin password to add, edit or remove church branches.</p>
-  <form id="gateForm">
-    <input type="password" id="gateInput" placeholder="Password" autocomplete="off" autofocus>
-    <button type="submit" class="btn primary" style="justify-content:center;">Unlock</button>
-    <span class="err" id="gateErr"></span>
-  </form>
-  <a href="admin.html" style="font-size:0.82rem;color:var(--muted-2);border-bottom:1px dotted var(--line-strong);">&larr; Main admin panel</a>
+  <p style="color:var(--muted);max-width:32ch;">Open the main admin sign-in to manage church branches.</p>
+  <a href="admin.html?next=branches" class="btn primary" style="justify-content:center;">Unlock admin</a>
+  <a href="branches.html" style="font-size:0.82rem;color:var(--muted-2);border-bottom:1px dotted var(--line-strong);">← Back to branches page</a>
 </div>
 
 <!-- Admin panel -->
